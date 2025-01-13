@@ -20,7 +20,7 @@ const getArgs = (): any=>
   }, {});
   
 let recipientName = (getArgs().recName) || "IVR" ;
-let delay = (getArgs().logDelay) || 0 ;
+let delay = ((getArgs().logDelay) && (getArgs().logDelay) > 0 && (getArgs().logDelay) < 10000 ) ? (getArgs().logDelay) : 0 ;
 
 
 const ivrTranscription = (
