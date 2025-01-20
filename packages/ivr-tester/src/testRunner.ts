@@ -21,7 +21,7 @@ import {
   TestSubject,
   validateTestSubject,
 } from "./configuration/call/validateTestSubject";
-import { MediaStreamPlayer, mediaStreamPlayerPlugin } from "./call/speaker/MediaStreamPlayer";
+import { mediaStreamPlayerPlugin } from "./call/speaker/MediaStreamPlayer";
 import { GenesysConfig } from "./configuration/GenesysConfig";
 import { GenesysCaller } from "./call/GenesysCaller";
 import { GenesysNumber } from "./configuration/call/GenesysNumber";

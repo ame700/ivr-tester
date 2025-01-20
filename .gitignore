@@ -35,3 +35,4 @@ pids
 
 /TestSuit/results/audio
 /TestSuit/results/transcript
+TestSuit/.env

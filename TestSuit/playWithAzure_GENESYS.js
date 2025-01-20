@@ -36,7 +36,7 @@ new IvrGenesysTester(config).run(
       },
       {
         whenPrompt: containsSimilarTo("talk to me"),
-        then: say("Welcome to our ivr testing and montoring engine."),
+        then: say("Hi Welcome to our ivr testing and montoring engine."),
         silenceAfterPrompt: 1000,
         timeout: 20000,
       },

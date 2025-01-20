@@ -31,16 +31,14 @@
   ],
   "dependencies": {
     "alawmulaw": "^6.0.0",
-    "audio-speaker": "^1.5.1",
     "chalk": "^4.1.0",
     "debug": "^4.3.1",
     "joi": "^17.4.0",
-    "speaker": "^0.5.5",
     "string-similarity": "^4.0.4",
     "twilio": "^3.57.0",
-    "wavefile": "^11.0.0",
     "ws": "^7.4.4",
     "@roamhq/wrtc": "^0.8.0",
+    "speaker": "^0.5.5",
     "genesys-cloud-streaming-client": "^17.2.7"
   },
   "devDependencies": {
@@ -52,7 +50,7 @@
     "@types/string-similarity": "^4.0.0",
     "@types/ws": "^7.4.0",
     "@types/webrtc": "^0.0.43",
-    "copyfiles": "^2.4.0",
+    "copyfiles": "^2.4.1",
     "get-port": "^5.1.1",
     "jest": "^26.4.2",
     "ngrok": "^3.4.0",

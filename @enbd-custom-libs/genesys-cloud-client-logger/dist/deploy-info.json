@@ -1,0 +1,34 @@
+{
+  "name": "genesys-cloud-client-logger",
+  "version": "4.2.13",
+  "ecosystem": "pc",
+  "team": "Client Streaming and Signaling",
+  "indexFiles": [
+    {
+      "file": "v4/genesys-cloud-client-logger.min.js.map"
+    },
+    {
+      "file": "v4/genesys-cloud-client-logger.min.js"
+    },
+    {
+      "file": "v4/genesys-cloud-client-logger.js.map"
+    },
+    {
+      "file": "v4/genesys-cloud-client-logger.js"
+    },
+    {
+      "file": "v4.2.13/genesys-cloud-client-logger.min.js.map"
+    },
+    {
+      "file": "v4.2.13/genesys-cloud-client-logger.min.js"
+    },
+    {
+      "file": "v4.2.13/genesys-cloud-client-logger.js.map"
+    },
+    {
+      "file": "v4.2.13/genesys-cloud-client-logger.js"
+    }
+  ],
+  "build": "57",
+  "buildDate": "2024-09-03T21:23:13.724787372Z"
+}

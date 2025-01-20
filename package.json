@@ -20,11 +20,16 @@
     "packages/*"
   ],
   "scripts": {
+    "prebuild": "yarn copy:custom-libs",
     "build": "lerna run build",
     "lint": "lerna run lint",
     "test": "lerna run test",
     "test:integration": "lerna run test:integration --scope ivr-tester-cli",
     "doc": "lerna run doc",
+    "copy:custom-libs": "yarn copy:lib-speaker && yarn copy:lib-genesys && yarn copy:lib-stanza",
+    "copy:lib-speaker": "copyfiles -u 1 \"@enbd-custom-libs/speaker/**\" node_modules",
+    "copy:lib-genesys": "copyfiles -u 1 \"@enbd-custom-libs/genesys-cloud-client-logger/**\" node_modules && copyfiles -u 1 \"@enbd-custom-libs/genesys-cloud-streaming-client/**\" node_modules",
+    "copy:lib-stanza": "copyfiles -u 1 \"@enbd-custom-libs/stanza/**\" node_modules",
     "readme:copy": "cp README.md ./packages/ivr-tester/"
   },
   "engines": {
