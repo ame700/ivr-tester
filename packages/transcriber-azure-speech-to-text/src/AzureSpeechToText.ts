@@ -30,8 +30,7 @@ export class AzureSpeechToText
         super();
         this.callingServiceType = callingServiceType;
         this.speechConfig = sdk.SpeechConfig.fromSubscription(speechKey, speechRegion);
-        this.stream = (callingServiceType == CallingServiceType.TWILIO)? (sdk.AudioInputStream.createPushStream(sdk.AudioStreamFormat.getWaveFormatPCM(8000,16,1))) 
-        : (sdk.AudioInputStream.createPushStream(sdk.AudioStreamFormat.getWaveFormatPCM(16000,16,1)));
+        this.stream = sdk.AudioInputStream.createPushStream(sdk.AudioStreamFormat.getWaveFormatPCM(8000,16,1))
         let audioConfig = sdk.AudioConfig.fromStreamInput(this.stream);
         this.speechRecognizer = new sdk.SpeechRecognizer(this.speechConfig, audioConfig);
         this.speechRecognizer.recognizing = (sender , evnt) => {
@@ -50,7 +49,7 @@ export class AzureSpeechToText
         if(this.callingServiceType == undefined || this.callingServiceType == CallingServiceType.TWILIO){
             this.stream.write(MulawToPcm.transcode(payload));
         }else{
-           let newSamples =  resample([...payload], 48000, 16000);
+           let newSamples = resample(payload, 48000, 8000);
            this.stream.write(new Uint16Array(newSamples).buffer);
         }
     }

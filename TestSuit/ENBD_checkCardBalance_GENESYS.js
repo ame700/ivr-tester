@@ -6,16 +6,16 @@ import {IvrGenesysTester  , press , hangUp, containsSimilarTo , doNothing, say ,
 const config = {
   genesysAuth: {
     env: process.env.GENESYS_ENV,
-    authToken: process.env.GENESYS_TOKEN
+    authToken : process.env.GENESYS_TOKEN
   },
   transcriber: azureTranscripeModule.azureSpeechToText({
     speechKey: process.env.AZURE_KEY,
-    callingServiceType: CallingServiceType.GENESYS
+    callingServiceType : CallingServiceType.GENESYS
   }),
   synthesizer: azureTranscripeModule.azureTextToSpeech({
     speechKey: process.env.AZURE_KEY,
     voiceName: "en-US-AndrewMultilingualNeural",
-    callingServiceType: CallingServiceType.GENESYS
+    callingServiceType : CallingServiceType.GENESYS
   }),
 
   playThroughSpeaker: true
@@ -29,7 +29,7 @@ new IvrGenesysTester(config).run(
       {
         whenPrompt: containsSimilarTo("welcome to emirates"),
         then: doNothing(),
-        silenceAfterPrompt: 200,
+        silenceAfterPrompt: 500,
         timeout: 20000,
       },
       {
@@ -38,28 +38,22 @@ new IvrGenesysTester(config).run(
         silenceAfterPrompt: 200,
         timeout: 20000,
       },
-      // {
-      //   whenPrompt: containsSimilarTo("to continue with automated phone banking press 2"),
-      //   then: press("2"),
-      //   silenceAfterPrompt: 1000,
-      //   timeout: 20000,
-      // },
       {
         whenPrompt: containsSimilarTo("please confirm in a few words what's the reason for your call"),
         then : say("check my account balance"),
-        silenceAfterPrompt: 500,
+        silenceAfterPrompt: 200,
         timeout: 60000,
       },
       {
         whenPrompt: containsSimilarTo("you want to check your account balance is that right"),
         then : say("yes correct"),
-        silenceAfterPrompt: 500,
+        silenceAfterPrompt: 200,
         timeout: 60000,
       },
       {
         whenPrompt: containsSimilarTo("please enter any of your valid card number"),
         then : press(process.env.CREDIT_CARD_NUMBER),
-        silenceAfterPrompt: 1500,
+        silenceAfterPrompt: 1000,
         timeout: 60000,
       },
       {

@@ -7,6 +7,8 @@ import { TypedEmitter } from "../Emitter";
 import { OutboundMediaSubject } from "./OutboundMediaSubject";
 import { OutboundMediaObserver } from "./OutboundMediaObserver";
 import { RTCPeerConnection , MediaStreamTrack } from "@roamhq/wrtc";
+import { requestApiWithRetry } from "../http/HttpUtils";
+import { GeneSysAuth } from "./Genesys";
 const { RTCAudioSink , RTCAudioSource} = require('@roamhq/wrtc').nonstandard;
 
 
@@ -22,7 +24,9 @@ export class GenesysCall extends TypedEmitter<CallEvents> implements Call , Outb
   constructor(
     private readonly peerConnection: RTCPeerConnection,
     private readonly audioSource : any,
-    private readonly dtmfGenerator: DtmfBufferGenerator
+    private genesysAuth: GeneSysAuth,
+    private readonly _conversationId : string,
+    private readonly _participantId : string
   ) {
     super();
     this.outboundMediaObserversList = []; 
@@ -48,11 +52,25 @@ export class GenesysCall extends TypedEmitter<CallEvents> implements Call , Outb
   }
 
   public sendDtmfTone(dtmfSequence: string): void {
-    this.sendMedia(
-      this.dtmfGenerator.generate(dtmfSequence),
-      `dtmf-${dtmfSequence}`
-    );
+    this.doSendDtmfWithDelay(dtmfSequence , 2000);
     GenesysCall.debug(`DTMF tone for ${dtmfSequence} sent`);
+  }
+
+  private async doSendDtmfWithDelay(dtmfSequence: string , delay: number) : Promise<any> {
+    let digits = dtmfSequence.split(""); 
+    for ( let i =0 ; i <digits.length ; i ++) {
+        requestApiWithRetry(`/conversations/${this._conversationId}/participants/${this._participantId}/digits`, {
+          method: 'post',
+          data: {digits: digits[i]}
+        }, this.genesysAuth);
+        await this.sleep(delay);
+    };
+  }
+
+  private sleep(ms:number) {
+    return new Promise((resolve) => {
+      setTimeout(resolve, ms);
+    });
   }
 
   public sendMedia(payload : Buffer, name?: string): void {

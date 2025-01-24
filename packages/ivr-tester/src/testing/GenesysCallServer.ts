@@ -5,19 +5,24 @@ import { TestAssigner } from "./IteratingTestAssigner";
 import { TestExecutor } from "./TestExecutor";
 import { CallServer, CallServerEvents } from "./TwilioCallServer";
 import { GenesysCall } from "../call/GenesysCall";
-import { RetryPromise } from "genesys-cloud-streaming-client/dist/es/utils";
-import { GeneSysAuth, IExtendedMediaSession, IPersonDetails } from "../call/Genesys";
-import StreamingClient, { HttpClient, IClientOptions, IPendingSession, ISessionInfo, RequestApiOptions } from "genesys-cloud-streaming-client";
+import { GeneSysAuth, IExtendedMediaSession, IPersonDetails, SubscriptionEvent } from "../call/Genesys";
+import StreamingClient, { IClientOptions, ISessionInfo } from "genesys-cloud-streaming-client";
 import { MediaStream , RTCPeerConnection , MediaStreamTrack} from "@roamhq/wrtc";
+import { requestApiWithRetry } from "../http/HttpUtils";
 const {  RTCAudioSource } = require('@roamhq/wrtc').nonstandard;
 
 export class GenesysCallServer
   extends TypedEmitter<CallServerEvents>
   implements CallServer {
   private static TestCouldNotBeAssignedReason = "TestCouldNotBeAssigned";
-  private _http: HttpClient;
+ 
   private _streamingConnection: StreamingClient;
+ 
+  private peerConnection : RTCPeerConnection;
+  private audioSource : any;
+
   private _personDetails: IPersonDetails;
+  private _conversationId : string;
 
   constructor(
     private readonly dtmfBufferGenerator: DtmfBufferGenerator,
@@ -25,7 +30,6 @@ export class GenesysCallServer
     private readonly testExecutor: TestExecutor,
     private genesysAuth: GeneSysAuth) {
     super();
-    this._http = new HttpClient();
   }
 
 
@@ -56,7 +60,7 @@ export class GenesysCallServer
 
     this._streamingConnection = new StreamingClient(connectionOptions);
     this._streamingConnection.on('connected', async () => { this.emit("listening", { localUrl : new URL(connectionOptions.host) })});
-    this._streamingConnection.on('disconnected', this.closed); //stopped
+    this._streamingConnection.on('disconnected', this.closed); 
     await this._streamingConnection.connect({ maxConnectionAttempts: Infinity });
     return Promise.resolve(new URL(connectionOptions.host));
   }
@@ -70,6 +74,11 @@ export class GenesysCallServer
     on('rtcSessionError', (err: any) => { console.log(err) }); //error
     // other events
     this._streamingConnection.on('error', (err: any) => { console.log(err) }); //error
+
+    //notification event
+    this._streamingConnection.notifications.subscribe(`v2.users.${this._personDetails.id}.conversations`, 
+      this.handleConversationUpdate.bind(this), true);
+
   }
 
 
@@ -78,53 +87,32 @@ export class GenesysCallServer
   }
 
   private onSessionInit(session: IExtendedMediaSession) {
-    let audioSource = new RTCAudioSource();
-    const track: MediaStreamTrack = audioSource.createTrack();
-    session.peerConnection.getTransceivers()[0].direction = 'sendrecv';
-    session.peerConnection.getSenders()[0].replaceTrack(track);
+    this._conversationId = session.conversationId;
+    this.audioSource = new RTCAudioSource();
+    this.peerConnection = session.peerConnection;
+    const track: MediaStreamTrack = this.audioSource.createTrack();
+    this.peerConnection.getTransceivers()[0].direction = 'sendrecv';
+    this.peerConnection.getSenders()[0].replaceTrack(track);
     this._streamingConnection.webrtcSessions.rtcSessionAccepted(session.id);
     session.on('terminated', this.onSessionTerminated.bind(this, session));
-    session.accept().then(()=>{
-      this.callConnected(session.peerConnection , audioSource);
-    });
+    session.accept();    
   }
 
   public fetchAuthenticatedUser(): Promise<IPersonDetails> {
-    return this.requestApiWithRetry('/users/me?expand=station').promise
+    return requestApiWithRetry('/users/me?expand=station' , {} , this.genesysAuth).promise
       .then((data: any) => {
         return data.data;
       });
   }
 
-  private buildRequestApiOptions(opts: Partial<RequestApiOptions> = {}): Partial<RequestApiOptions> {
-    if (!opts.noAuthHeader) {
-      opts.authToken = this.genesysAuth.authToken;
-    }
-
-    if (!opts.host) {
-      opts.host = this.genesysAuth.env;
-    }
-
-    if (!opts.method) {
-      opts.method = 'get';
-    }
-
-    return opts;
-  }
-
-  private requestApiWithRetry(path: string, opts: Partial<RequestApiOptions> = {}): RetryPromise<any> {
-    opts = this.buildRequestApiOptions(opts);
-    const request = this._http.requestApiWithRetry(path, opts as RequestApiOptions);
-    request.promise.catch(e => console.log("error" + e));
-    return request;
-  };
+  
 
 
   public async stop(): Promise<void> {
   }
 
-  private callConnected(audioSinkConnection: RTCPeerConnection , audioSource: any ): void {
-    const call = new GenesysCall(audioSinkConnection , audioSource, this.dtmfBufferGenerator);
+  private callConnected(audioSinkConnection: RTCPeerConnection , audioSource: any  , participantId : string): void {
+    const call = new GenesysCall(audioSinkConnection , audioSource , this.genesysAuth, this._conversationId , participantId);
 
     this.emit("callConnected", { call });
 
@@ -151,6 +139,26 @@ export class GenesysCallServer
     let tracks = (streamOrTrack instanceof MediaStream) ? streamOrTrack.getTracks() : [streamOrTrack];
     tracks.forEach((t: any) => t.stop());
     this.closed();
+  }
+
+  
+    private handleConversationUpdate ( updateEvent: SubscriptionEvent){
+
+      let participants = updateEvent.eventBody.participants;
+      if(participants.length > 1) { 
+          let _participantId = participants[0].id ; //first participant is the call initiator 
+
+          // call connected when caller in state of dialing and callee in connected state
+          if(participants[0].calls[0].state =='dialing'  && participants[1].calls[0].state == 'connected'){ 
+            this.callConnected(this.peerConnection , this.audioSource , _participantId);
+          }
+          
+          // call connected when caller in state of dialing and callee in connected state
+          else if(participants[1].calls[0].state == 'terminated'){ 
+            this.closed();
+          }
+      }
+
   }
 
 

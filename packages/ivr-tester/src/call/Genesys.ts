@@ -106,3 +106,12 @@ export interface IStation {
   webRtcForceTurn: boolean;
   webRtcCallAppearances: number;
 }
+
+export interface SubscriptionEvent {
+  metadata: {
+    correlationId: string;
+  };
+  topicName: string;
+  eventBody: any;
+}
+

@@ -13,7 +13,7 @@ export interface TelephonyCall {
 }
 export interface GenesysCall {
   type: "genesys-telephony";
-  call: GenesysNumber;
+  call: GenesysNumber
 }
 
 export type RequestedCall = AudioPlaybackCall | TelephonyCall | GenesysCall;
